@@ -1,0 +1,25 @@
+[
+  {
+    "file": "digital_arrest.wav",
+    "title": "Digital Arrest — Fake CBI & Customs Warrant",
+    "expected": "SCAM",
+    "first_demand_at": 24.1
+  },
+  {
+    "file": "fake_kyc.wav",
+    "title": "Fake Bank KYC — Account Block & OTP Demand",
+    "expected": "SCAM",
+    "first_demand_at": 16.0
+  },
+  {
+    "file": "fake_courier.wav",
+    "title": "Fake FedEx Courier — Illegal Parcel & Police Handoff",
+    "expected": "SCAM",
+    "first_demand_at": 18.2
+  },
+  {
+    "file": "genuine_bank.wav",
+    "title": "Genuine — Local Bank Passbook & Branch Visit Notice",
+    "expected": "SAFE"
+  }
+]

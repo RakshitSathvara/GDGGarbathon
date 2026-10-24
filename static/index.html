@@ -1,0 +1,1590 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saavdhan — Mid-Call Scam Detector for Elders</title>
+  <meta name="description" content="Saavdhan warns elderly and first-time smartphone users mid-call when a phone call is a scam, in simple Gujarati or Hindi, naming the exact red flags heard." />
+  <meta property="og:title" content="Saavdhan — Mid-Call Scam Detector for Elders" />
+  <meta property="og:description" content="Real-time Gujarati and Hindi phone scam detector for Digital Arrest, Fake KYC, and Fake Courier calls." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Gujarati:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-canvas: #0B0F17;
+      --bg-panel: #111827;
+      --bg-elevated: #1E293B;
+      --border-subtle: #1F2937;
+      --border-strong: #334155;
+      --text-primary: #F8FAFC;
+      --text-secondary: #CBD5E1;
+      --text-muted: #94A3B8;
+      --safe-bg: #064E3B;
+      --safe-border: #059669;
+      --safe-text: #A7F3D0;
+      --safe-solid: #10B981;
+      --suspicious-bg: #78350F;
+      --suspicious-border: #D97706;
+      --suspicious-text: #FDE68A;
+      --suspicious-solid: #F59E0B;
+      --scam-bg: #7F1D1D;
+      --scam-border: #DC2626;
+      --scam-text: #FECACA;
+      --scam-solid: #EF4444;
+      --unavail-bg: #334155;
+      --unavail-border: #64748B;
+      --unavail-text: #E2E8F0;
+      --unavail-solid: #64748B;
+      --accent-blue: #38BDF8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-family: 'Plus Jakarta Sans', 'Noto Sans Gujarati', 'Noto Sans Devanagari', sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .tabular-nums {
+      font-family: 'IBM Plex Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .indic-text {
+      font-family: 'Noto Sans Gujarati', 'Noto Sans Devanagari', 'Plus Jakarta Sans', sans-serif;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 24px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .brand-sub {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .call-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .call-btn {
+      appearance: none;
+      background: #161F30;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .call-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .call-btn.active {
+      background: #1E3A5F;
+      color: #FFFFFF;
+      border-color: var(--accent-blue);
+    }
+
+    .call-btn .call-tag {
+      font-size: 0.6875rem;
+      font-family: 'IBM Plex Mono', monospace;
+      opacity: 0.85;
+    }
+
+    .topbar-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .lang-toggle {
+      display: inline-flex;
+      background: #0F172A;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 3px;
+    }
+
+    .lang-btn {
+      appearance: none;
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      padding: 6px 12px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 150ms ease, color 150ms ease;
+      white-space: nowrap;
+    }
+
+    .lang-btn.active {
+      background: var(--text-primary);
+      color: #0F172A;
+    }
+
+    .mode-badge-btn {
+      appearance: none;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: 'IBM Plex Mono', monospace;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 150ms ease, border-color 150ms ease;
+    }
+
+    .mode-badge-btn.mode-live {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6EE7B7;
+      border-color: #059669;
+    }
+
+    .mode-badge-btn.mode-replay {
+      background: rgba(245, 158, 11, 0.18);
+      color: #FCD34D;
+      border-color: #D97706;
+    }
+
+    .tts-btn {
+      appearance: none;
+      background: #161F30;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .tts-btn.active {
+      background: #1E3A5F;
+      color: #BAE6FD;
+      border-color: var(--accent-blue);
+    }
+
+    /* ERROR BANNER FOR LIVE FAILURE */
+    .error-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 24px;
+      background: #450A0A;
+      border-bottom: 1px solid #DC2626;
+      color: #FECACA;
+      font-size: 0.875rem;
+    }
+
+    .error-banner.visible {
+      display: flex;
+    }
+
+    .error-banner button {
+      background: #DC2626;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* MAIN WORKSPACE */
+    .workspace {
+      display: grid;
+      grid-template-columns: 440px 1fr;
+      gap: 24px;
+      padding: 24px;
+      max-width: 1480px;
+      width: 100%;
+      margin: 0 auto;
+      flex: 1;
+      align-items: start;
+    }
+
+    @media (max-width: 1080px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* LEFT: ELDER PHONE MOCKUP */
+    .phone-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .phone-frame {
+      width: 100%;
+      max-width: 420px;
+      min-height: 720px;
+      background: #090D16;
+      border: 3px solid #263248;
+      border-radius: 36px;
+      padding: 20px 18px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+    }
+
+    .phone-statusbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      padding: 0 8px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .caller-header {
+      text-align: center;
+      padding: 18px 8px 14px;
+    }
+
+    .caller-label {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .caller-number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--text-primary);
+    }
+
+    .caller-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .call-timer-row {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 6px;
+      background: #131C2E;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #E2E8F0;
+    }
+
+    /* SLIDE-OVER WARNING BANNER (>= 28px high-contrast text) */
+    .phone-warning-card {
+      margin: 8px 0 14px;
+      border-radius: 18px;
+      padding: 18px 16px;
+      border: 2px solid var(--safe-border);
+      background: var(--safe-bg);
+      color: var(--safe-text);
+      transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), background-color 180ms ease, border-color 180ms ease;
+    }
+
+    .phone-warning-card.verdict-SAFE {
+      background: #063729;
+      border-color: #10B981;
+      color: #ECFDF5;
+    }
+
+    .phone-warning-card.verdict-SUSPICIOUS {
+      background: #78350F;
+      border-color: #F59E0B;
+      color: #FEF3C7;
+    }
+
+    .phone-warning-card.verdict-SCAM {
+      background: #7F1D1D;
+      border-color: #EF4444;
+      color: #FFFFFF;
+    }
+
+    .phone-warning-card.verdict-unavailable {
+      background: #1E293B;
+      border-color: #64748B;
+      color: #E2E8F0;
+    }
+
+    .warning-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .warning-main-text {
+      font-size: 29px;
+      line-height: 1.32;
+      font-weight: 700;
+      color: #FFFFFF;
+      word-break: break-word;
+    }
+
+    .phone-warning-card.verdict-SAFE .warning-main-text {
+      font-size: 22px;
+      color: #D1FAE5;
+    }
+
+    /* RED FLAG CHIPS ON PHONE */
+    .phone-flags-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      max-height: 250px;
+      padding: 4px 2px;
+    }
+
+    .phone-flags-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .flag-chip {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid;
+      font-size: 0.875rem;
+    }
+
+    /* grey for AUTHORITY_CLAIM, amber for URGENCY/THREAT, red for the rest */
+    .flag-chip.chip-grey {
+      background: #1E293B;
+      border-color: #64748B;
+      color: #F1F5F9;
+    }
+
+    .flag-chip.chip-amber {
+      background: #451A03;
+      border-color: #F59E0B;
+      color: #FEF3C7;
+    }
+
+    .flag-chip.chip-red {
+      background: #450A0A;
+      border-color: #EF4444;
+      color: #FEE2E2;
+    }
+
+    .flag-chip-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.9375rem;
+    }
+
+    .flag-chip-time {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      opacity: 0.9;
+      flex-shrink: 0;
+    }
+
+    .flag-chip-quote {
+      font-size: 0.8125rem;
+      opacity: 0.95;
+      line-height: 1.4;
+    }
+
+    /* PHONE CONTROLS */
+    .phone-controls {
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .phone-btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-play-call,
+    .btn-stop-call {
+      appearance: none;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 150ms ease, transform 150ms ease;
+    }
+
+    .btn-play-call {
+      background: #10B981;
+      color: #052E16;
+    }
+
+    .btn-stop-call {
+      background: #EF4444;
+      color: #FFFFFF;
+    }
+
+    .btn-play-call:hover,
+    .btn-stop-call:hover {
+      opacity: 0.92;
+    }
+
+    /* RIGHT: JUDGE DIAGNOSTIC CONSOLE */
+    .judge-console {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .console-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    /* TOP KPI & RISK METER STRIP */
+    .judge-header-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .judge-header-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .risk-meter-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .risk-meter-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .risk-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .risk-value-group {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .risk-score-number {
+      font-size: 2.25rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .verdict-text-label {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .verdict-text-label.SAFE { color: var(--safe-solid); }
+    .verdict-text-label.SUSPICIOUS { color: var(--suspicious-solid); }
+    .verdict-text-label.SCAM { color: var(--scam-solid); }
+    .verdict-text-label.unavailable { color: var(--unavail-solid); }
+
+    .risk-bar-track {
+      height: 14px;
+      background: #090D16;
+      border-radius: 7px;
+      border: 1px solid var(--border-strong);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .risk-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--safe-solid);
+      transition: width 200ms ease, background-color 200ms ease;
+    }
+
+    .risk-scale-marks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .timing-proof-box {
+      background: #0D131F;
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .warned-at-headline {
+      font-size: 1.0625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .demand-lead-sub {
+      font-size: 0.875rem;
+      color: #6EE7B7;
+      font-weight: 600;
+    }
+
+    .queue-telemetry-line {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    /* ENGLISH JUDGE WARNING */
+    .english-warning-box {
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: #0D131F;
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .english-warning-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .english-warning-text {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* CHUNK TIMELINE */
+    .section-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .section-meta {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    .chunk-timeline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 10px;
+    }
+
+    .chunk-cell {
+      background: #0D131F;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: border-color 150ms ease, background-color 150ms ease;
+    }
+
+    .chunk-cell.state-pending {
+      opacity: 0.65;
+    }
+
+    .chunk-cell.state-inflight {
+      border-color: var(--accent-blue);
+      background: #13233A;
+    }
+
+    .chunk-cell.state-SAFE {
+      background: rgba(6, 78, 59, 0.35);
+      border-color: var(--safe-border);
+    }
+
+    .chunk-cell.state-SUSPICIOUS {
+      background: rgba(120, 53, 15, 0.45);
+      border-color: var(--suspicious-border);
+    }
+
+    .chunk-cell.state-SCAM {
+      background: rgba(127, 29, 29, 0.55);
+      border-color: var(--scam-border);
+    }
+
+    .chunk-cell.state-unavailable {
+      background: #1E293B;
+      border-color: #64748B;
+    }
+
+    .chunk-cell-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .chunk-cell-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .chunk-cell-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+      font-size: 0.75rem;
+    }
+
+    /* LIVE TRANSCRIPT */
+    .transcript-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 360px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .transcript-empty {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      padding: 24px 0;
+      text-align: center;
+    }
+
+    .transcript-turn {
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #0D131F;
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .transcript-turn-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .speaker-CALLER { color: #FCA5A5; }
+    .speaker-RECEIVER { color: #93C5FD; }
+    .speaker-UNKNOWN { color: #CBD5E1; }
+
+    .transcript-turn-text {
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      line-height: 1.55;
+    }
+
+    mark.flagged-quote {
+      background: rgba(239, 68, 68, 0.28);
+      color: #FECACA;
+      padding: 1px 4px;
+      border-radius: 4px;
+      border-bottom: 2px solid #EF4444;
+      font-weight: 600;
+    }
+
+    mark.genuine-quote {
+      background: rgba(16, 185, 129, 0.22);
+      color: #A7F3D0;
+      padding: 1px 4px;
+      border-radius: 4px;
+      border-bottom: 2px solid #10B981;
+    }
+  </style>
+</head>
+<body>
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="brand-group">
+      <span class="brand-title">Saavdhan સાવધાન</span>
+      <span class="brand-sub">Mid-Call Elder Scam Shield</span>
+    </div>
+
+    <nav class="call-selector" id="callSelector" aria-label="Recorded phone calls">
+      <!-- Populated dynamically from /api/calls -->
+    </nav>
+
+    <div class="topbar-controls">
+      <div class="lang-toggle" role="group" aria-label="Warning language">
+        <button type="button" id="langGuBtn" class="lang-btn active indic-text" data-lang="gu">ગુજરાતી</button>
+        <button type="button" id="langHiBtn" class="lang-btn indic-text" data-lang="hi">हिंदी</button>
+      </div>
+
+      <button type="button" id="ttsToggleBtn" class="tts-btn" title="Read warnings aloud">
+        Speak Warning: OFF
+      </button>
+
+      <button type="button" id="modeBadgeBtn" class="mode-badge-btn mode-live" title="Switch between Live Gemini API and Replay Cache">
+        LIVE
+      </button>
+    </div>
+  </header>
+
+  <!-- LIVE ERROR BANNER (never switch silently) -->
+  <div id="errorBanner" class="error-banner" role="alert">
+    <span id="errorBannerText">Live Gemini analysis encountered an error on this chunk.</span>
+    <button type="button" id="offerReplayBtn">Switch to Replay Cache</button>
+  </div>
+
+  <!-- MAIN DUAL-PANE WORKSPACE -->
+  <main class="workspace">
+    <!-- LEFT: ELDER PHONE SCREEN -->
+    <section class="phone-column" aria-label="Elder phone call screen">
+      <div class="phone-frame">
+        <div>
+          <div class="phone-statusbar tabular-nums">
+            <span>Jio 4G · VoLTE</span>
+            <span id="phoneClock">10:42</span>
+            <span>88%</span>
+          </div>
+
+          <div class="caller-header">
+            <div class="caller-label" id="callerStatusLabel">Incoming Call</div>
+            <div class="caller-number tabular-nums">+91 98XXX XXXXX</div>
+            <div class="caller-subtitle" id="activeCallTitle">Select a call to begin</div>
+            <div class="call-timer-row tabular-nums">
+              <span id="callTimerText">00:00</span>
+              <span>/</span>
+              <span id="callDurationText">00:00</span>
+            </div>
+          </div>
+
+          <!-- SLIDE-OVER MID-CALL WARNING (>= 28px high contrast) -->
+          <div id="phoneWarningCard" class="phone-warning-card verdict-SAFE" role="region" aria-live="assertive">
+            <div class="warning-header-row">
+              <span id="phoneVerdictBadge">SAFE · સુરક્ષિત</span>
+              <span id="phoneRiskPill" class="tabular-nums">Risk 0/100</span>
+            </div>
+            <div id="phoneWarningText" class="warning-main-text indic-text">
+              અત્યાર સુધી કોઈ જોખમ સંભળાયું નથી
+            </div>
+          </div>
+
+          <!-- LOCALIZED RED FLAG CHIPS -->
+          <div class="phone-flags-section">
+            <div class="phone-flags-title" id="phoneFlagsHeader">Red Flags Heard (0)</div>
+            <div id="phoneFlagsList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+        </div>
+
+        <div class="phone-controls">
+          <audio id="callAudio" preload="auto" style="width: 100%; height: 34px;"></audio>
+          <div class="phone-btn-row">
+            <button type="button" id="playCallBtn" class="btn-play-call">
+              Start Call
+            </button>
+            <button type="button" id="stopCallBtn" class="btn-stop-call">
+              Stop / Cut Call
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: JUDGE DIAGNOSTIC CONSOLE -->
+    <section class="judge-console" aria-label="Judge diagnostic console">
+      <!-- RISK METER + TIMING PROOF -->
+      <div class="console-card">
+        <div class="judge-header-grid">
+          <div class="risk-meter-box">
+            <div class="risk-meter-top">
+              <span class="risk-label">Real-Time Scam Risk Meter (0–100)</span>
+              <div class="risk-value-group">
+                <span id="judgeRiskScore" class="risk-score-number tabular-nums">0</span>
+                <span id="judgeVerdictLabel" class="verdict-text-label SAFE">SAFE</span>
+              </div>
+            </div>
+            <div class="risk-bar-track">
+              <div id="judgeRiskFill" class="risk-bar-fill"></div>
+            </div>
+            <div class="risk-scale-marks tabular-nums">
+              <span>0 SAFE (&lt;30)</span>
+              <span>30 SUSPICIOUS (30–69)</span>
+              <span>70 SCAM (≥70 Sticky)</span>
+              <span>100</span>
+            </div>
+          </div>
+
+          <div class="timing-proof-box">
+            <div id="warnedAtText" class="warned-at-headline tabular-nums">
+              No scam warning triggered yet
+            </div>
+            <div id="demandDeltaText" class="demand-lead-sub tabular-nums">
+              Waiting for call playback…
+            </div>
+            <div class="queue-telemetry-line tabular-nums">
+              <span id="inFlightStatus">In-flight: idle</span>
+              <span>·</span>
+              <span id="queueLagStatus">Queue: 0 | Lag: 0.0s</span>
+              <span>·</span>
+              <span id="scamTypeStatus">Type: NONE</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="english-warning-box">
+          <div>
+            <div class="english-warning-label">English Judge Summary (warning_en)</div>
+            <div id="judgeWarningEn" class="english-warning-text">No risk detected so far.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHUNK TIMELINE & LATENCY -->
+      <div class="console-card">
+        <div class="section-header-row">
+          <h2 class="section-title">Silence-Aware Chunk Timeline &amp; Latency</h2>
+          <span id="chunkSummaryMeta" class="section-meta tabular-nums">0 / 0 chunks analyzed · Playhead gated</span>
+        </div>
+        <div id="chunkTimelineGrid" class="chunk-timeline-grid"></div>
+      </div>
+
+      <!-- LIVE TRANSCRIPT WITH HIGHLIGHTED QUOTES -->
+      <div class="console-card">
+        <div class="section-header-row">
+          <h2 class="section-title">Live Transcript (Flagged Quotes Highlighted)</h2>
+          <span id="transcriptMeta" class="section-meta tabular-nums">0 utterances</span>
+        </div>
+        <div id="transcriptContainer" class="transcript-list">
+          <div class="transcript-empty">
+            Press "Start Call" on the phone to play the recording and watch real-time chunk analysis.
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Exact localized chip labels & fixed texts from specification
+    const CHIP_LABELS = {
+      AUTHORITY_CLAIM: {
+        gu: 'પોલીસ/બેંક હોવાનો દાવો',
+        hi: 'पुलिस/बैंक होने का दावा',
+        color: 'chip-grey'
+      },
+      URGENCY: {
+        gu: 'ઉતાવળ કરાવે છે',
+        hi: 'जल्दबाज़ी का दबाव',
+        color: 'chip-amber'
+      },
+      THREAT: {
+        gu: 'ધમકી',
+        hi: 'धमकी',
+        color: 'chip-amber'
+      },
+      OTP_OR_CREDENTIALS: {
+        gu: 'OTP/PIN માંગ્યો',
+        hi: 'OTP/PIN माँगा',
+        color: 'chip-red'
+      },
+      MONEY_REQUEST: {
+        gu: 'પૈસા માંગ્યા',
+        hi: 'पैसे माँगे',
+        color: 'chip-red'
+      },
+      REMOTE_ACCESS_OR_LINK: {
+        gu: 'એપ/લિંક ખોલાવવાનો પ્રયાસ',
+        hi: 'ऐप/लिंक खुलवाने की कोशिश',
+        color: 'chip-red'
+      },
+      SECRECY: {
+        gu: 'કોઈને ન કહેવાનું કહ્યું',
+        hi: 'किसी को न बताने को कहा',
+        color: 'chip-red'
+      },
+      HANDOFF_TO_OFFICIAL: {
+        gu: 'કોલ "પોલીસ"ને ટ્રાન્સફર',
+        hi: 'कॉल "पुलिस" को ट्रांसफ़र',
+        color: 'chip-red'
+      }
+    };
+
+    const FIXED_TEXTS = {
+      SAFE: {
+        gu: 'અત્યાર સુધી કોઈ જોખમ સંભળાયું નથી',
+        hi: 'अभी तक कोई ख़तरा सुनाई नहीं दिया'
+      },
+      SCAM_FALLBACK: {
+        gu: 'સાવધાન! આ કોલ ફ્રોડ હોઈ શકે છે. OTP કે પૈસા ન આપો. ફોન કાપી નાખો અને 1930 પર ફોન કરો.',
+        hi: 'सावधान! यह कॉल फ्रॉड हो सकती है। OTP या पैसे मत दीजिए। फ़ोन काट दीजिए और 1930 पर कॉल कीजिए।'
+      }
+    };
+
+    const VERDICT_BADGES = {
+      SAFE: { gu: 'SAFE · સુરક્ષિત', hi: 'SAFE · सुरक्षित' },
+      SUSPICIOUS: { gu: 'SUSPICIOUS · શંકાસ્પદ કોલ', hi: 'SUSPICIOUS · संदिग्ध कॉल' },
+      SCAM: { gu: 'SCAM ALERT · સાવધાન ફ્રોડ કોલ!', hi: 'SCAM ALERT · सावधान फ्रॉड कॉल!' },
+      unavailable: { gu: 'UNAVAILABLE · ચકાસણી અપ્રાપ્ય', hi: 'UNAVAILABLE · जाँच अनुपलब्ध' }
+    };
+
+    let state = {
+      calls: [],
+      activeCall: null,
+      sessionId: null,
+      lang: 'gu',
+      replayMode: false,
+      speakWarning: false,
+      inFlight: false,
+      queuedChunks: [],
+      sentChunks: new Set(),
+      chunkResults: {},
+      sessionState: {
+        transcript: [],
+        red_flags: [],
+        genuine_signals: [],
+        scam_type: 'NONE',
+        risk: 0,
+        verdict: 'SAFE',
+        first_scam_at: null,
+        warning_gu: '',
+        warning_hi: '',
+        warning_en: ''
+      },
+      beepedScam: false,
+      lastSpokenWarning: ''
+    };
+
+    const audioEl = document.getElementById('callAudio');
+    const callSelectorEl = document.getElementById('callSelector');
+    const langGuBtn = document.getElementById('langGuBtn');
+    const langHiBtn = document.getElementById('langHiBtn');
+    const modeBadgeBtn = document.getElementById('modeBadgeBtn');
+    const ttsToggleBtn = document.getElementById('ttsToggleBtn');
+    const playCallBtn = document.getElementById('playCallBtn');
+    const stopCallBtn = document.getElementById('stopCallBtn');
+    const errorBanner = document.getElementById('errorBanner');
+    const errorBannerText = document.getElementById('errorBannerText');
+    const offerReplayBtn = document.getElementById('offerReplayBtn');
+
+    function formatMMSS(sec) {
+      const s = Math.max(0, Math.round(sec || 0));
+      const m = Math.floor(s / 60);
+      const rem = s % 60;
+      return `${m}:${String(rem).padStart(2, '0')}`;
+    }
+
+    function formatPaddedMMSS(sec) {
+      const s = Math.max(0, Math.floor(sec || 0));
+      const m = Math.floor(s / 60);
+      const rem = s % 60;
+      return `${String(m).padStart(2, '0')}:${String(rem).padStart(2, '0')}`;
+    }
+
+    // Short Web Audio beep when the verdict first turns SCAM
+    function playScamBeep() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        [0, 0.18].forEach((offset) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(880, now + offset);
+          gain.gain.setValueAtTime(0.18, now + offset);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.14);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + offset);
+          osc.stop(now + offset + 0.15);
+        });
+      } catch (_) {}
+    }
+
+    function speakWarningIfNeeded(text) {
+      if (!state.speakWarning || !text || text === state.lastSpokenWarning) return;
+      state.lastSpokenWarning = text;
+      try {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(text);
+          utter.lang = state.lang === 'gu' ? 'gu-IN' : 'hi-IN';
+          utter.rate = 0.95;
+          window.speechSynthesis.speak(utter);
+        }
+      } catch (_) {}
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function highlightText(text, redFlags, genuineSignals) {
+      let safe = escapeHtml(text);
+      const quotes = (redFlags || [])
+        .map(f => f.quote)
+        .filter(Boolean)
+        .sort((a, b) => b.length - a.length);
+
+      for (const q of quotes) {
+        const escapedQ = escapeHtml(q);
+        if (escapedQ && safe.includes(escapedQ)) {
+          safe = safe.split(escapedQ).join(`<mark class="flagged-quote">${escapedQ}</mark>`);
+        }
+      }
+
+      const genQuotes = (genuineSignals || [])
+        .map(s => s.quote)
+        .filter(Boolean)
+        .sort((a, b) => b.length - a.length);
+
+      for (const gq of genQuotes) {
+        const escapedGq = escapeHtml(gq);
+        if (escapedGq && safe.includes(escapedGq)) {
+          safe = safe.split(escapedGq).join(`<mark class="genuine-quote">${escapedGq}</mark>`);
+        }
+      }
+      return safe;
+    }
+
+    function renderTopBar() {
+      callSelectorEl.innerHTML = '';
+      state.calls.forEach((call, idx) => {
+        const shortTitle = call.title.split('—')[0].trim();
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.title = call.title;
+        btn.className = 'call-btn' + (state.activeCall && state.activeCall.id === call.id ? ' active' : '');
+        btn.innerHTML = `
+          <span>${idx + 1}. ${escapeHtml(shortTitle)}</span>
+          <span class="call-tag">[${escapeHtml(call.expected)}]</span>
+        `;
+        btn.addEventListener('click', () => selectCall(call.id));
+        callSelectorEl.appendChild(btn);
+      });
+
+      langGuBtn.classList.toggle('active', state.lang === 'gu');
+      langHiBtn.classList.toggle('active', state.lang === 'hi');
+
+      modeBadgeBtn.textContent = state.replayMode ? 'REPLAY' : 'LIVE';
+      modeBadgeBtn.className = 'mode-badge-btn ' + (state.replayMode ? 'mode-replay' : 'mode-live');
+
+      ttsToggleBtn.textContent = `Speak Warning: ${state.speakWarning ? 'ON' : 'OFF'}`;
+      ttsToggleBtn.classList.toggle('active', state.speakWarning);
+    }
+
+    function renderPhoneAndJudge() {
+      const s = state.sessionState;
+      const call = state.activeCall;
+      const verdict = s.verdict || 'SAFE';
+      const risk = s.risk || 0;
+
+      // Phone Header
+      document.getElementById('activeCallTitle').textContent = call ? call.title : 'No call selected';
+      document.getElementById('callDurationText').textContent = formatPaddedMMSS(call ? call.duration : 0);
+
+      // Phone Warning Banner
+      const warningCard = document.getElementById('phoneWarningCard');
+      warningCard.className = `phone-warning-card verdict-${verdict}`;
+      const badgeMap = VERDICT_BADGES[verdict] || VERDICT_BADGES.SAFE;
+      document.getElementById('phoneVerdictBadge').textContent = badgeMap[state.lang];
+      document.getElementById('phoneRiskPill').textContent = `Risk ${risk}/100`;
+
+      let displayWarning = '';
+      if (verdict === 'SAFE') {
+        displayWarning = FIXED_TEXTS.SAFE[state.lang];
+      } else if (verdict === 'unavailable') {
+        displayWarning = state.lang === 'gu'
+          ? 'કોલ ચકાસણી અત્યારે ઉપલબ્ધ નથી — સાવચેત રહો'
+          : 'कॉल जाँच अभी उपलब्ध नहीं है — सतर्क रहें';
+      } else {
+        displayWarning = state.lang === 'gu' ? s.warning_gu : s.warning_hi;
+        if (!displayWarning) {
+          displayWarning = FIXED_TEXTS.SCAM_FALLBACK[state.lang];
+        }
+      }
+      document.getElementById('phoneWarningText').textContent = displayWarning;
+
+      if (verdict === 'SCAM' && displayWarning) {
+        speakWarningIfNeeded(displayWarning);
+      }
+
+      // Red flag chips on phone
+      const flags = s.red_flags || [];
+      document.getElementById('phoneFlagsHeader').textContent =
+        state.lang === 'gu'
+          ? `સંભળાયેલા જોખમી સંકેતો (${flags.length})`
+          : `सुने गए ख़तरे के संकेत (${flags.length})`;
+
+      const flagsListEl = document.getElementById('phoneFlagsList');
+      flagsListEl.innerHTML = '';
+      flags.slice().reverse().forEach((flag) => {
+        const meta = CHIP_LABELS[flag.type] || { gu: flag.type, hi: flag.type, color: 'chip-red' };
+        const chip = document.createElement('div');
+        chip.className = `flag-chip ${meta.color} indic-text`;
+        chip.innerHTML = `
+          <div class="flag-chip-top">
+            <span>${escapeHtml(meta[state.lang])}</span>
+            <span class="flag-chip-time">${escapeHtml(flag.time_mm_ss || formatPaddedMMSS(flag.end_s))}</span>
+          </div>
+          <div class="flag-chip-quote">“${escapeHtml(flag.quote)}”</div>
+        `;
+        flagsListEl.appendChild(chip);
+      });
+
+      // Judge Risk Meter
+      document.getElementById('judgeRiskScore').textContent = String(risk);
+      const judgeVerdictEl = document.getElementById('judgeVerdictLabel');
+      judgeVerdictEl.textContent = verdict;
+      judgeVerdictEl.className = `verdict-text-label ${verdict}`;
+
+      const fillEl = document.getElementById('judgeRiskFill');
+      fillEl.style.width = `${Math.min(100, Math.max(0, risk))}%`;
+      if (verdict === 'SCAM') {
+        fillEl.style.backgroundColor = 'var(--scam-solid)';
+      } else if (verdict === 'SUSPICIOUS') {
+        fillEl.style.backgroundColor = 'var(--suspicious-solid)';
+      } else if (verdict === 'unavailable') {
+        fillEl.style.backgroundColor = 'var(--unavail-solid)';
+      } else {
+        fillEl.style.backgroundColor = 'var(--safe-solid)';
+      }
+
+      // Warned at m:ss of m:ss (+ N s before the first demand)
+      const warnedEl = document.getElementById('warnedAtText');
+      const demandEl = document.getElementById('demandDeltaText');
+      if (s.first_scam_at != null && call) {
+        warnedEl.textContent = `Warned at ${formatMMSS(s.first_scam_at)} of ${formatMMSS(call.duration)}`;
+        if (call.first_demand_at != null) {
+          const diff = Math.round((call.first_demand_at - s.first_scam_at) * 10) / 10;
+          if (diff >= 0) {
+            demandEl.textContent = `${diff} s before the first demand (at ${formatMMSS(call.first_demand_at)})`;
+            demandEl.style.color = '#6EE7B7';
+          } else {
+            demandEl.textContent = `${Math.abs(diff)} s after the first demand (at ${formatMMSS(call.first_demand_at)})`;
+            demandEl.style.color = '#FCD34D';
+          }
+        } else {
+          demandEl.textContent = 'Scam warning active on call';
+        }
+      } else {
+        warnedEl.textContent = call && call.expected === 'SAFE'
+          ? `Call Status: SAFE (${formatMMSS(audioEl.currentTime)} of ${formatMMSS(call.duration)})`
+          : 'Monitoring call chunks in real time…';
+        demandEl.textContent = call && call.first_demand_at != null
+          ? `First caller demand benchmark at ${formatMMSS(call.first_demand_at)}`
+          : 'Genuine benchmark call (no scam demand expected)';
+        demandEl.style.color = '#94A3B8';
+      }
+
+      // Queue & lag telemetry
+      const playhead = audioEl.currentTime || 0;
+      let maxAnalyzedEnd = 0;
+      Object.values(state.chunkResults).forEach((cr) => {
+        if (cr && cr.end_s > maxAnalyzedEnd) maxAnalyzedEnd = cr.end_s;
+      });
+      const lagSec = Math.max(0, playhead - maxAnalyzedEnd);
+      document.getElementById('inFlightStatus').textContent = state.inFlight
+        ? 'In-flight: 1 request'
+        : 'In-flight: idle';
+      document.getElementById('queueLagStatus').textContent =
+        `Queue: ${state.queuedChunks.length} | Lag: ${lagSec.toFixed(1)}s`;
+      document.getElementById('scamTypeStatus').textContent = `Type: ${s.scam_type || 'NONE'}`;
+
+      // English Warning
+      document.getElementById('judgeWarningEn').textContent =
+        s.warning_en || (verdict === 'SAFE' ? 'No risk detected so far.' : 'Suspicious activity detected.');
+
+      // Chunk Timeline
+      const timelineGrid = document.getElementById('chunkTimelineGrid');
+      timelineGrid.innerHTML = '';
+      const chunks = call ? call.chunks : [];
+      const analyzedCount = Object.keys(state.chunkResults).length;
+      document.getElementById('chunkSummaryMeta').textContent =
+        `${analyzedCount} / ${chunks.length} chunks analyzed · Playhead gated`;
+
+      chunks.forEach((c) => {
+        const res = state.chunkResults[c.index];
+        const isQueued = state.queuedChunks.includes(c.index);
+        let stateClass = 'state-pending';
+        let statusLabel = 'Pending';
+        let latencyText = '—';
+
+        if (res) {
+          const v = res.status === 'unavailable' ? 'unavailable' : res.verdict;
+          stateClass = `state-${v}`;
+          statusLabel = v === 'unavailable' ? 'UNAVAIL' : `${v} (${res.risk_score})`;
+          latencyText = `${res.latency_ms} ms`;
+        } else if (isQueued) {
+          stateClass = 'state-inflight';
+          statusLabel = state.inFlight && state.queuedChunks[0] === c.index ? 'Analyzing…' : 'Queued';
+        }
+
+        const cell = document.createElement('div');
+        cell.className = `chunk-cell ${stateClass} tabular-nums`;
+        cell.innerHTML = `
+          <div class="chunk-cell-top">
+            <span>#${c.index + 1}</span>
+            <span>${escapeHtml(statusLabel)}</span>
+          </div>
+          <div class="chunk-cell-time">${c.start_s.toFixed(1)}s–${c.end_s.toFixed(1)}s</div>
+          <div class="chunk-cell-bottom">
+            <span>Latency</span>
+            <span>${escapeHtml(latencyText)}</span>
+          </div>
+        `;
+        timelineGrid.appendChild(cell);
+      });
+
+      // Transcript
+      const transcriptEl = document.getElementById('transcriptContainer');
+      const turns = s.transcript || [];
+      document.getElementById('transcriptMeta').textContent = `${turns.length} utterances`;
+
+      if (turns.length === 0) {
+        transcriptEl.innerHTML = `
+          <div class="transcript-empty">
+            Press "Start Call" on the phone to play the recording. Each chunk is sent only after the playhead passes its boundary.
+          </div>
+        `;
+      } else {
+        transcriptEl.innerHTML = '';
+        turns.forEach((turn) => {
+          const row = document.createElement('div');
+          row.className = 'transcript-turn';
+          row.innerHTML = `
+            <div class="transcript-turn-meta tabular-nums">
+              <span class="speaker-${escapeHtml(turn.speaker)}">${escapeHtml(turn.speaker)}</span>
+              <span>Chunk #${(turn.chunk_index ?? 0) + 1} · ${formatPaddedMMSS(turn.start_s)}–${formatPaddedMMSS(turn.end_s)}</span>
+            </div>
+            <div class="transcript-turn-text indic-text">${highlightText(turn.text, s.red_flags, s.genuine_signals)}</div>
+          `;
+          transcriptEl.appendChild(row);
+        });
+        transcriptEl.scrollTop = transcriptEl.scrollHeight;
+      }
+    }
+
+    async function selectCall(callId) {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+      errorBanner.classList.remove('visible');
+
+      const found = state.calls.find(c => c.id === callId) || state.calls[0];
+      if (!found) return;
+      state.activeCall = found;
+      state.inFlight = false;
+      state.queuedChunks = [];
+      state.sentChunks = new Set();
+      state.chunkResults = {};
+      state.beepedScam = false;
+      state.lastSpokenWarning = '';
+      state.sessionState = {
+        transcript: [],
+        red_flags: [],
+        genuine_signals: [],
+        scam_type: 'NONE',
+        risk: 0,
+        verdict: 'SAFE',
+        first_scam_at: null,
+        warning_gu: '',
+        warning_hi: '',
+        warning_en: ''
+      };
+
+      audioEl.src = `/calls/${found.file}`;
+      document.getElementById('callTimerText').textContent = '00:00';
+      document.getElementById('callerStatusLabel').textContent = 'Ready to Play Call';
+
+      const resp = await fetch('/api/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ call_id: found.id })
+      });
+      const data = await resp.json();
+      state.sessionId = data.session_id;
+      if (data.call) {
+        state.activeCall = data.call;
+      }
+
+      renderTopBar();
+      renderPhoneAndJudge();
+    }
+
+    function enqueueEligibleChunks(forceAllPassed = false, includeLastChunk = false) {
+      if (!state.activeCall || !state.sessionId) return;
+      const chunks = state.activeCall.chunks || [];
+      const cur = audioEl.currentTime || 0;
+
+      chunks.forEach((chunk, idx) => {
+        if (state.sentChunks.has(chunk.index)) return;
+        const isLast = idx === chunks.length - 1;
+        // Request chunk i only after audio.currentTime passes its end (the last chunk on 'ended')
+        const passed = (!isLast && cur >= chunk.end_s) || (isLast && (includeLastChunk || cur >= chunk.end_s));
+        if (passed || forceAllPassed) {
+          state.sentChunks.add(chunk.index);
+          state.queuedChunks.push(chunk.index);
+        }
+      });
+
+      renderPhoneAndJudge();
+      processQueue();
+    }
+
+    async function processQueue() {
+      if (state.inFlight || state.queuedChunks.length === 0) return;
+      state.inFlight = true;
+      const chunkIndex = state.queuedChunks[0];
+      const currentSessionId = state.sessionId;
+      renderPhoneAndJudge();
+
+      try {
+        const resp = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: currentSessionId,
+            chunk_index: chunkIndex,
+            replay: state.replayMode
+          })
+        });
+
+        if (state.sessionId !== currentSessionId) return;
+
+        if (!resp.ok) {
+          const errBody = await resp.json().catch(() => ({}));
+          throw new Error(errBody.detail || `HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        if (state.sessionId !== currentSessionId) return;
+
+        state.queuedChunks.shift();
+        state.chunkResults[chunkIndex] = data.chunk;
+        state.sessionState = data.session;
+
+        if (data.chunk.status === 'unavailable') {
+          state.sessionState.verdict = 'unavailable';
+          if (!state.replayMode) {
+            errorBannerText.textContent = `Chunk #${chunkIndex + 1} live analysis failed (${data.chunk.error || 'unavailable'}). Switch to Replay Cache?`;
+            errorBanner.classList.add('visible');
+          }
+        } else if (data.session.verdict === 'SCAM' && !state.beepedScam) {
+          state.beepedScam = true;
+          playScamBeep();
+        }
+      } catch (err) {
+        if (state.sessionId !== currentSessionId) return;
+        state.queuedChunks.shift();
+        state.chunkResults[chunkIndex] = {
+          chunk_index: chunkIndex,
+          start_s: state.activeCall.chunks[chunkIndex]?.start_s || 0,
+          end_s: state.activeCall.chunks[chunkIndex]?.end_s || 0,
+          status: 'unavailable',
+          verdict: 'unavailable',
+          risk_score: state.sessionState.risk || 0,
+          latency_ms: 0
+        };
+        if (!state.replayMode) {
+          errorBannerText.textContent = `Live analysis error: ${err.message}. Switch to Replay Cache?`;
+          errorBanner.classList.add('visible');
+        }
+      } finally {
+        if (state.sessionId === currentSessionId) {
+          state.inFlight = false;
+          renderPhoneAndJudge();
+          if (state.queuedChunks.length > 0) {
+            processQueue();
+          }
+        }
+      }
+    }
+
+    // Event Listeners
+    audioEl.addEventListener('timeupdate', () => {
+      document.getElementById('callTimerText').textContent = formatPaddedMMSS(audioEl.currentTime);
+      enqueueEligibleChunks(false, false);
+    });
+
+    audioEl.addEventListener('play', () => {
+      document.getElementById('callerStatusLabel').textContent = 'Call in Progress · Saavdhan Active';
+    });
+
+    audioEl.addEventListener('ended', () => {
+      document.getElementById('callerStatusLabel').textContent = 'Call Ended';
+      enqueueEligibleChunks(false, true);
+    });
+
+    playCallBtn.addEventListener('click', async () => {
+      if (audioEl.ended || audioEl.currentTime >= (state.activeCall?.duration || 999) - 0.2) {
+        await selectCall(state.activeCall.id);
+      }
+      audioEl.play().catch(() => {});
+    });
+
+    stopCallBtn.addEventListener('click', () => {
+      audioEl.pause();
+      document.getElementById('callerStatusLabel').textContent = 'Call Cut / Stopped';
+    });
+
+    langGuBtn.addEventListener('click', () => {
+      state.lang = 'gu';
+      renderTopBar();
+      renderPhoneAndJudge();
+    });
+
+    langHiBtn.addEventListener('click', () => {
+      state.lang = 'hi';
+      renderTopBar();
+      renderPhoneAndJudge();
+    });
+
+    modeBadgeBtn.addEventListener('click', async () => {
+      state.replayMode = !state.replayMode;
+      errorBanner.classList.remove('visible');
+      renderTopBar();
+      if (state.activeCall) {
+        await selectCall(state.activeCall.id);
+      }
+    });
+
+    ttsToggleBtn.addEventListener('click', () => {
+      state.speakWarning = !state.speakWarning;
+      renderTopBar();
+    });
+
+    offerReplayBtn.addEventListener('click', async () => {
+      state.replayMode = true;
+      errorBanner.classList.remove('visible');
+      renderTopBar();
+      if (state.activeCall) {
+        await selectCall(state.activeCall.id);
+        audioEl.play().catch(() => {});
+      }
+    });
+
+    async function init() {
+      const resp = await fetch('/api/calls');
+      const data = await resp.json();
+      state.calls = data.calls || [];
+      state.replayMode = Boolean(data.demo_replay);
+      renderTopBar();
+      if (state.calls.length > 0) {
+        await selectCall(state.calls[0].id);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
