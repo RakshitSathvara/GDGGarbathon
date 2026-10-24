@@ -27,6 +27,8 @@ from app.detector import (
 ROOT_DIR = Path(__file__).resolve().parent.parent
 CALLS_DIR = ROOT_DIR / "calls"
 RAW_CALLS_DIR = CALLS_DIR / "raw"
+TMP_CALLS_DIR = Path("/tmp/saavdhan_calls")
+TMP_MANIFEST_PATH = TMP_CALLS_DIR / "manifest.json"
 CACHE_DIR = ROOT_DIR / "cache"
 STATIC_DIR = ROOT_DIR / "static"
 MANIFEST_PATH = CALLS_DIR / "manifest.json"
@@ -56,16 +58,40 @@ class UploadWavRequest(BaseModel):
     expected: Optional[str] = "SCAM"
 
 
+def resolve_wav_path(file_name: str) -> Path:
+    primary = CALLS_DIR / file_name
+    if primary.exists():
+        return primary
+    fallback = TMP_CALLS_DIR / file_name
+    if fallback.exists():
+        return fallback
+    return primary
+
+
 def load_manifest() -> List[Dict[str, Any]]:
+    if TMP_MANIFEST_PATH.exists():
+        try:
+            return json.loads(TMP_MANIFEST_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            pass
     if not MANIFEST_PATH.exists():
         return []
     return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
 
 
+def save_manifest(manifest: List[Dict[str, Any]]) -> None:
+    payload = json.dumps(manifest, ensure_ascii=False, indent=2)
+    try:
+        MANIFEST_PATH.write_text(payload, encoding="utf-8")
+    except OSError:
+        TMP_CALLS_DIR.mkdir(parents=True, exist_ok=True)
+        TMP_MANIFEST_PATH.write_text(payload, encoding="utf-8")
+
+
 def get_call_metadata(entry: Dict[str, Any]) -> Dict[str, Any]:
     file_name = entry["file"]
     call_id = Path(file_name).stem
-    wav_path = CALLS_DIR / file_name
+    wav_path = resolve_wav_path(file_name)
     mtime = wav_path.stat().st_mtime if wav_path.exists() else 0.0
 
     cached = CALL_META_CACHE.get(call_id)
@@ -132,12 +158,19 @@ def upload_wav(req: UploadWavRequest) -> Dict[str, Any]:
 
     stem = re.sub(r"[^a-z0-9_-]+", "_", Path(filename).stem.lower()).strip("_")[:48] or "uploaded_call"
     out_filename = f"{stem}.wav"
-    RAW_CALLS_DIR.mkdir(parents=True, exist_ok=True)
-    CALLS_DIR.mkdir(parents=True, exist_ok=True)
 
-    raw_path = RAW_CALLS_DIR / out_filename
-    dest_path = CALLS_DIR / out_filename
-    raw_path.write_bytes(raw_bytes)
+    # Write to CALLS_DIR if writable (local macOS/Linux), otherwise fallback to /tmp/saavdhan_calls (Vercel serverless)
+    try:
+        RAW_CALLS_DIR.mkdir(parents=True, exist_ok=True)
+        CALLS_DIR.mkdir(parents=True, exist_ok=True)
+        raw_path = RAW_CALLS_DIR / out_filename
+        dest_path = CALLS_DIR / out_filename
+        raw_path.write_bytes(raw_bytes)
+    except OSError:
+        TMP_CALLS_DIR.mkdir(parents=True, exist_ok=True)
+        raw_path = TMP_CALLS_DIR / f"raw_{out_filename}"
+        dest_path = TMP_CALLS_DIR / out_filename
+        raw_path.write_bytes(raw_bytes)
 
     # Convert to 16 kHz mono 16-bit PCM WAV via ffmpeg (matching scripts/prep.sh)
     try:
@@ -177,7 +210,7 @@ def upload_wav(req: UploadWavRequest) -> Dict[str, Any]:
         entry = {"file": out_filename, "title": title, "expected": expected}
         manifest.append(entry)
 
-    MANIFEST_PATH.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    save_manifest(manifest)
     call_meta = get_call_metadata(entry)
     calls = [get_call_metadata(item) for item in manifest]
     return {"call": call_meta, "calls": calls}
@@ -262,7 +295,7 @@ def analyze(req: AnalyzeChunkRequest) -> Dict[str, Any]:
             "warning_en": raw_cached.get("warning_en", ""),
         }
     else:
-        wav_path = CALLS_DIR / call_meta["file"]
+        wav_path = resolve_wav_path(call_meta["file"])
         if not wav_path.exists():
             raise HTTPException(status_code=404, detail=f"Audio file missing: {call_meta['file']}")
         wav_bytes = slice_wav_bytes(wav_path, start_s, end_s)
@@ -304,11 +337,25 @@ def _public_session(session: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-CALLS_DIR.mkdir(parents=True, exist_ok=True)
-STATIC_DIR.mkdir(parents=True, exist_ok=True)
+@app.get("/calls/{file_name}")
+def serve_call_audio(file_name: str) -> FileResponse:
+    safe_name = Path(file_name).name
+    wav_path = resolve_wav_path(safe_name)
+    if not wav_path.exists():
+        raise HTTPException(status_code=404, detail=f"Call audio not found: {safe_name}")
+    return FileResponse(str(wav_path), media_type="audio/wav")
 
-app.mount("/calls", StaticFiles(directory=str(CALLS_DIR)), name="calls")
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+try:
+    CALLS_DIR.mkdir(parents=True, exist_ok=True)
+    STATIC_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
+
+if CALLS_DIR.exists():
+    app.mount("/calls", StaticFiles(directory=str(CALLS_DIR)), name="calls")
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 @app.get("/")
