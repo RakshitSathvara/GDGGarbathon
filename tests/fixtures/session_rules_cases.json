@@ -1,0 +1,500 @@
+{
+  "description": "Parity cases for the deterministic session rules. tests/node/contract.test.ts and tests/python/test_contract.py replay every step through their backend and must produce identical results. '{{SCAM.gu}}'-style placeholders expand to shared/detection_policy.json fallback warnings. Array-valued expectations compare lengths.",
+  "cases": [
+    {
+      "name": "hard red flag floors risk at 75 and fills cited fallback warnings",
+      "call_id": "fake_kyc",
+      "steps": [
+        {
+          "chunk": { "index": 0, "start_s": 0, "end_s": 6.0 },
+          "result": {
+            "status": "ok",
+            "latency_ms": 420,
+            "model": "test-model",
+            "transcript": [{ "speaker": "CALLER", "text": "તમારો OTP આપો" }],
+            "new_red_flags": [
+              { "type": "OTP_OR_CREDENTIALS", "quote": "તમારો OTP આપો", "why": "Asking for OTP" }
+            ],
+            "new_genuine_signals": [],
+            "scam_type": "FAKE_KYC",
+            "risk_score": 40,
+            "verdict": "SUSPICIOUS",
+            "warning_gu": "",
+            "warning_hi": "",
+            "warning_en": ""
+          },
+          "expect": {
+            "chunk": {
+              "status": "ok",
+              "verdict": "SCAM",
+              "risk_score": 75,
+              "model_risk_score": 40,
+              "latency_ms": 420,
+              "model": "test-model",
+              "scam_type": "FAKE_KYC",
+              "transcript": 1,
+              "new_red_flags": 1,
+              "new_genuine_signals": 0,
+              "flag_times": ["00:06"],
+              "warning_gu": "{{SCAM.gu}} (\"તમારો OTP આપો\")",
+              "warning_hi": "{{SCAM.hi}} (\"તમારો OTP આપો\")",
+              "warning_en": "{{SCAM.en}} (\"તમારો OTP આપો\")"
+            },
+            "session": {
+              "risk": 75,
+              "verdict": "SCAM",
+              "ever_scam": true,
+              "first_scam_at": 6.0,
+              "scam_type": "FAKE_KYC",
+              "transcript": 1,
+              "red_flags": 1,
+              "genuine_signals": 0,
+              "chunks": 1,
+              "warning_gu": "{{SCAM.gu}} (\"તમારો OTP આપો\")",
+              "warning_hi": "{{SCAM.hi}} (\"તમારો OTP આપો\")",
+              "warning_en": "{{SCAM.en}} (\"તમારો OTP આપો\")"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "authority + threat + urgency escalates to SCAM, which then stays sticky",
+      "call_id": "digital_arrest",
+      "steps": [
+        {
+          "chunk": { "index": 0, "start_s": 0, "end_s": 5.8 },
+          "result": {
+            "status": "ok",
+            "latency_ms": 350,
+            "model": "test-model",
+            "transcript": [{ "speaker": "CALLER", "text": "मैं सीबीआई से बोल रहा हूँ, वारंट है" }],
+            "new_red_flags": [
+              { "type": "AUTHORITY_CLAIM", "quote": "मैं सीबीआई से बोल रहा हूँ", "why": "CBI claim" },
+              { "type": "THREAT", "quote": "वारंट है", "why": "Warrant threat" }
+            ],
+            "new_genuine_signals": [],
+            "scam_type": "DIGITAL_ARREST",
+            "risk_score": 55,
+            "verdict": "SUSPICIOUS",
+            "warning_gu": "સાવચેત રહો",
+            "warning_hi": "सतर्क रहें",
+            "warning_en": "Be cautious"
+          },
+          "expect": {
+            "chunk": {
+              "status": "ok",
+              "verdict": "SUSPICIOUS",
+              "risk_score": 55,
+              "model_risk_score": 55,
+              "new_red_flags": 2,
+              "warning_gu": "સાવચેત રહો",
+              "warning_hi": "सतर्क रहें",
+              "warning_en": "Be cautious"
+            },
+            "session": {
+              "risk": 55,
+              "verdict": "SUSPICIOUS",
+              "ever_scam": false,
+              "first_scam_at": null,
+              "scam_type": "DIGITAL_ARREST",
+              "red_flags": 2,
+              "transcript": 1,
+              "chunks": 1
+            }
+          }
+        },
+        {
+          "chunk": { "index": 1, "start_s": 5.8, "end_s": 11.5 },
+          "result": {
+            "status": "ok",
+            "latency_ms": 360,
+            "model": "test-model",
+            "transcript": [{ "speaker": "CALLER", "text": "अभी दस मिनट में अकाउंट फ्रीज होगा" }],
+            "new_red_flags": [
+              { "type": "URGENCY", "quote": "अभी दस मिनट में", "why": "10 min urgency" }
+            ],
+            "new_genuine_signals": [],
+            "scam_type": "DIGITAL_ARREST",
+            "risk_score": 60,
+            "verdict": "SUSPICIOUS",
+            "warning_gu": "",
+            "warning_hi": "",
+            "warning_en": ""
+          },
+          "expect": {
+            "chunk": {
+              "verdict": "SCAM",
+              "risk_score": 70,
+              "model_risk_score": 60,
+              "new_red_flags": 1,
+              "warning_gu": "{{SCAM.gu}} (\"अभी दस मिनट में\")",
+              "warning_hi": "{{SCAM.hi}} (\"अभी दस मिनट में\")",
+              "warning_en": "{{SCAM.en}} (\"अभी दस मिनट में\")"
+            },
+            "session": {
+              "risk": 70,
+              "verdict": "SCAM",
+              "ever_scam": true,
+              "first_scam_at": 11.5,
+              "red_flags": 3,
+              "transcript": 2,
+              "chunks": 2
+            }
+          }
+        },
+        {
+          "chunk": { "index": 2, "start_s": 11.5, "end_s": 17.0 },
+          "result": {
+            "status": "ok",
+            "latency_ms": 310,
+            "model": "test-model",
+            "transcript": [{ "speaker": "RECEIVER", "text": "ठीक है" }],
+            "new_red_flags": [],
+            "new_genuine_signals": [],
+            "scam_type": "NONE",
+            "risk_score": 10,
+            "verdict": "SAFE",
+            "warning_gu": "",
+            "warning_hi": "",
+            "warning_en": ""
+          },
+          "expect": {
+            "chunk": {
+              "verdict": "SCAM",
+              "risk_score": 70,
+              "model_risk_score": 10,
+              "new_red_flags": 0,
+              "scam_type": "DIGITAL_ARREST",
+              "warning_gu": "{{SCAM.gu}} (\"अभी दस मिनट में\")",
+              "warning_hi": "{{SCAM.hi}} (\"अभी दस मिनट में\")",
+              "warning_en": "{{SCAM.en}} (\"अभी दस मिनट में\")"
+            },
+            "session": {
+              "risk": 70,
+              "verdict": "SCAM",
+              "first_scam_at": 11.5,
+              "scam_type": "DIGITAL_ARREST",
+              "transcript": 3,
+              "chunks": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "SUSPICIOUS gets a fallback warning and may fall back to SAFE when SCAM was never reached",
+      "call_id": "genuine_bank",
+      "steps": [
+        {
+          "chunk": { "index": 0, "start_s": 0, "end_s": 6.0 },
+          "result": {
+            "status": "ok",
+            "latency_ms": 300,
+            "model": "test-model",
+            "transcript": [{ "speaker": "CALLER", "text": "હું બેંકમાંથી બોલું છું" }],
+            "new_red_flags": [
+              { "type": "AUTHORITY_CLAIM", "quote": "હું બેંકમાંથી બોલું છું", "why": "Bank claim" }
+            ],
+            "new_genuine_signals": [],
+            "scam_type": "NONE",
+            "risk_score": 35,
+            "verdict": "SUSPICIOUS",
+            "warning_gu": "",
+            "warning_hi": "",
+            "warning_en": ""
+          },
+          "expect": {
+            "chunk": {
+              "verdict": "SUSPICIOUS",
+              "risk_score": 35,
+              "warning_gu": "{{SUSPICIOUS.gu}}",
+              "warning_hi": "{{SUSPICIOUS.hi}}",
+              "warning_en": "{{SUSPICIOUS.en}}"
+            },
+            "session": {
+              "risk": 35,
+              "verdict": "SUSPICIOUS",
+              "scam_type": "NONE",
+              "red_flags": 1,
+              "warning_gu": "{{SUSPICIOUS.gu}}",
+              "warning_hi": "{{SUSPICIOUS.hi}}",
+              "warning_en": "{{SUSPICIOUS.en}}"
+            }
+          }
+        },
+        {
+          "chunk": { "index": 1, "start_s": 6.0, "end_s": 12.5 },
+          "result": {
+            "status": "ok",
+            "latency_ms": 300,
+            "model": "test-model",
+            "transcript": [{ "speaker": "CALLER", "text": "ફોન પર કોઈ OTP આપવાનો નથી" }],
+            "new_red_flags": [],
+            "new_genuine_signals": [
+              { "quote": "ફોન પર કોઈ OTP આપવાનો નથી", "why": "Never asks OTP" }
+            ],
+            "scam_type": "NONE",
+            "risk_score": 5,
+            "verdict": "SAFE",
+            "warning_gu": "",
+            "warning_hi": "",
+            "warning_en": ""
+          },
+          "expect": {
+            "chunk": {
+              "verdict": "SAFE",
+              "risk_score": 5,
+              "model_risk_score": 5,
+              "new_genuine_signals": 1,
+              "signal_times": ["00:13"],
+              "warning_gu": "{{SUSPICIOUS.gu}}",
+              "warning_hi": "{{SUSPICIOUS.hi}}",
+              "warning_en": "{{SUSPICIOUS.en}}"
+            },
+            "session": {
+              "risk": 5,
+              "verdict": "SAFE",
+              "ever_scam": false,
+              "first_scam_at": null,
+              "genuine_signals": 1,
+              "chunks": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "an unavailable chunk is recorded without changing the session verdict",
+      "call_id": "fake_courier",
+      "steps": [
+        {
+          "chunk": { "index": 0, "start_s": 0, "end_s": 6.0 },
+          "result": {
+            "status": "ok",
+            "latency_ms": 280,
+            "model": "test-model",
+            "transcript": [{ "speaker": "CALLER", "text": "નમસ્તે" }],
+            "new_red_flags": [],
+            "new_genuine_signals": [],
+            "scam_type": "NONE",
+            "risk_score": 20,
+            "verdict": "SAFE",
+            "warning_gu": "",
+            "warning_hi": "",
+            "warning_en": ""
+          },
+          "expect": {
+            "chunk": { "verdict": "SAFE", "risk_score": 20 },
+            "session": { "risk": 20, "verdict": "SAFE", "chunks": 1 }
+          }
+        },
+        {
+          "chunk": { "index": 1, "start_s": 6.0, "end_s": 12.0 },
+          "result": {
+            "status": "unavailable",
+            "error": "Gemini request timed out",
+            "latency_ms": 12000
+          },
+          "expect": {
+            "chunk": {
+              "status": "unavailable",
+              "verdict": "unavailable",
+              "risk_score": 20,
+              "error": "Gemini request timed out",
+              "latency_ms": 12000,
+              "transcript": 0,
+              "new_red_flags": 0,
+              "new_genuine_signals": 0,
+              "warning_gu": "",
+              "warning_hi": "",
+              "warning_en": ""
+            },
+            "session": { "risk": 20, "verdict": "SAFE", "transcript": 1, "chunks": 2 }
+          }
+        }
+      ]
+    },
+    {
+      "name": "repeated red flags are deduplicated and model warnings that cite a quote are kept",
+      "call_id": "digital_arrest",
+      "steps": [
+        {
+          "chunk": { "index": 0, "start_s": 0, "end_s": 6.0 },
+          "result": {
+            "status": "ok",
+            "latency_ms": 500,
+            "model": "test-model",
+            "transcript": [{ "speaker": "CALLER", "text": "किसी को मत बताना, फ़ोन मत काटना" }],
+            "new_red_flags": [
+              { "type": "SECRECY", "quote": "किसी को मत बताना", "why": "Isolating the victim" }
+            ],
+            "new_genuine_signals": [],
+            "scam_type": "DIGITAL_ARREST",
+            "risk_score": 90,
+            "verdict": "SCAM",
+            "warning_gu": "સાવધાન! કોલર કહે છે \"किसी को मत बताना\". ફોન કાપી નાખો અને 1930 પર ફોન કરો.",
+            "warning_hi": "सावधान! कॉलर कह रहा है \"किसी को मत बताना\". फ़ोन काटिए और 1930 पर कॉल कीजिए।",
+            "warning_en": "Warning! The caller said \"किसी को मत बताना\" (tell no one). Hang up and call 1930."
+          },
+          "expect": {
+            "chunk": {
+              "verdict": "SCAM",
+              "risk_score": 90,
+              "model_risk_score": 90,
+              "warning_gu": "સાવધાન! કોલર કહે છે \"किसी को मत बताना\". ફોન કાપી નાખો અને 1930 પર ફોન કરો.",
+              "warning_hi": "सावधान! कॉलर कह रहा है \"किसी को मत बताना\". फ़ोन काटिए और 1930 पर कॉल कीजिए।",
+              "warning_en": "Warning! The caller said \"किसी को मत बताना\" (tell no one). Hang up and call 1930."
+            },
+            "session": { "first_scam_at": 6.0, "red_flags": 1 }
+          }
+        },
+        {
+          "chunk": { "index": 1, "start_s": 6.0, "end_s": 11.9 },
+          "result": {
+            "status": "ok",
+            "latency_ms": 450,
+            "model": "test-model",
+            "transcript": [{ "speaker": "CALLER", "text": "किसी को मत बताना" }],
+            "new_red_flags": [
+              { "type": "SECRECY", "quote": "किसी को मत बताना", "why": "Repeated secrecy demand" }
+            ],
+            "new_genuine_signals": [],
+            "scam_type": "DIGITAL_ARREST",
+            "risk_score": 85,
+            "verdict": "SCAM",
+            "warning_gu": "",
+            "warning_hi": "",
+            "warning_en": ""
+          },
+          "expect": {
+            "chunk": {
+              "verdict": "SCAM",
+              "risk_score": 85,
+              "new_red_flags": 1,
+              "flag_times": ["00:12"],
+              "warning_gu": "{{SCAM.gu}} (\"किसी को मत बताना\")",
+              "warning_hi": "{{SCAM.hi}} (\"किसी को मत बताना\")",
+              "warning_en": "{{SCAM.en}} (\"किसी को मत बताना\")"
+            },
+            "session": {
+              "risk": 85,
+              "first_scam_at": 6.0,
+              "red_flags": 1,
+              "transcript": 2,
+              "chunks": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gujarati typos are normalised and an empty English warning gets the fallback",
+      "call_id": "fake_courier",
+      "steps": [
+        {
+          "chunk": { "index": 0, "start_s": 0, "end_s": 7.04 },
+          "result": {
+            "status": "ok",
+            "latency_ms": 610,
+            "model": "test-model",
+            "transcript": [{ "speaker": "CALLER", "text": "પચાસ હજાર ટ્રાન્સફર કરો" }],
+            "new_red_flags": [
+              {
+                "type": "MONEY_REQUEST",
+                "quote": "પચાસ હજાર ટ્રાન્સફર કરો",
+                "why": "Demands a transfer"
+              }
+            ],
+            "new_genuine_signals": [],
+            "scam_type": "OTHER_FRAUD",
+            "risk_score": 80,
+            "verdict": "SCAM",
+            "warning_gu": "सावधान! પૈસા ન મોકલો (\"પચાસ હજાર ટ્રાન્સફર કરો\")",
+            "warning_hi": "सावधान! पैसे मत भेजिए (\"પચાસ હજાર ટ્રાન્સફર કરો\")",
+            "warning_en": ""
+          },
+          "expect": {
+            "chunk": {
+              "verdict": "SCAM",
+              "risk_score": 80,
+              "scam_type": "OTHER_FRAUD",
+              "flag_times": ["00:07"],
+              "warning_gu": "સાવધાન! પૈસા ન મોકલો (\"પચાસ હજાર ટ્રાન્સફર કરો\")",
+              "warning_hi": "सावधान! पैसे मत भेजिए (\"પચાસ હજાર ટ્રાન્સફર કરો\")",
+              "warning_en": "{{SCAM.en}} (\"પચાસ હજાર ટ્રાન્સફર કરો\")"
+            },
+            "session": { "first_scam_at": 7.04, "scam_type": "OTHER_FRAUD" }
+          }
+        },
+        {
+          "chunk": { "index": 1, "start_s": 7.04, "end_s": 13.0 },
+          "result": {
+            "status": "ok",
+            "latency_ms": 590,
+            "model": "test-model",
+            "transcript": [{ "speaker": "CALLER", "text": "UPI થી મોકલો" }],
+            "new_red_flags": [
+              { "type": "MONEY_REQUEST", "quote": "UPI થી મોકલો", "why": "Payment demand" }
+            ],
+            "new_genuine_signals": [],
+            "scam_type": "OTHER_FRAUD",
+            "risk_score": 88,
+            "verdict": "SCAM",
+            "warning_gu": "સાપવધાન! UPI થી પૈસા ન મોકલો (\"UPI થી મોકલો\")",
+            "warning_hi": "सावधान! UPI से पैसे मत भेजिए (\"UPI થી મોકલો\")",
+            "warning_en": "Warning! The caller wants money by UPI (\"UPI થી મોકલો\"). Hang up and call 1930."
+          },
+          "expect": {
+            "chunk": {
+              "verdict": "SCAM",
+              "risk_score": 88,
+              "warning_gu": "સાવધાન! UPI થી પૈસા ન મોકલો (\"UPI થી મોકલો\")",
+              "warning_hi": "सावधान! UPI से पैसे मत भेजिए (\"UPI થી મોકલો\")",
+              "warning_en": "Warning! The caller wants money by UPI (\"UPI થી મોકલો\"). Hang up and call 1930."
+            },
+            "session": { "red_flags": 2, "first_scam_at": 7.04 }
+          }
+        }
+      ]
+    }
+  ],
+  "context_blocks": [
+    {
+      "name": "mid-call block lists transcript, flags and current risk",
+      "chunk_num": 4,
+      "total_chunks": 14,
+      "start_s": 18.2,
+      "end_s": 24.6,
+      "session": {
+        "transcript": [
+          { "speaker": "CALLER", "text": "Arrest warrant issued" },
+          { "speaker": "RECEIVER", "text": "क्या?" }
+        ],
+        "red_flags": [
+          { "type": "THREAT", "quote": "Arrest warrant issued", "why": "Threat" },
+          { "type": "AUTHORITY_CLAIM", "quote": "CBI officer", "why": "Authority" }
+        ],
+        "genuine_signals": [],
+        "risk": 55,
+        "verdict": "SUSPICIOUS"
+      },
+      "expected": "CHUNK 4/14 | 00:18.2–00:24.6\nCALL SO FAR:\nCALLER: Arrest warrant issued\nRECEIVER: क्या?\nRED FLAGS SO FAR: THREAT \"Arrest warrant issued\"; AUTHORITY_CLAIM \"CBI officer\"\nGENUINE SIGNALS SO FAR: none\nCURRENT: risk 55, SUSPICIOUS"
+    },
+    {
+      "name": "first block of a call with only a genuine signal",
+      "chunk_num": 2,
+      "total_chunks": 6,
+      "start_s": 62.0,
+      "end_s": 68.5,
+      "session": {
+        "transcript": [],
+        "red_flags": [],
+        "genuine_signals": [{ "quote": "ફોન પર કોઈ OTP આપવાનો નથી", "why": "Never asks OTP" }],
+        "risk": 0,
+        "verdict": "SAFE"
+      },
+      "expected": "CHUNK 2/6 | 01:02.0–01:08.5\nCALL SO FAR:\n(call just started)\nRED FLAGS SO FAR: none\nGENUINE SIGNALS SO FAR: \"ફોન પર કોઈ OTP આપવાનો નથી\"\nCURRENT: risk 0, SAFE"
+    }
+  ]
+}

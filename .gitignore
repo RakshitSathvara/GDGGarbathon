@@ -1,9 +1,30 @@
+# Dependencies & build output
 node_modules/
 dist/
+
+# Local secrets
 .env
 .env.local
+
+# Replay cache written by scripts/eval.py
 cache/
+
+# Python
 __pycache__/
 *.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Tooling & OS
 .DS_Store
+*.log
+coverage/
+test-results/
 .playwright-cli/
+
+# Google AI Studio agent scratch media (screenshots taken while building)
+.aistudio/artifacts/

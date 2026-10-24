@@ -1,6 +1,6 @@
 {
   "name": "Saavdhan",
   "description": "Real-time phone call scam detector for elders and first-time smartphone users, delivering mid-call warnings in Gujarati and Hindi with red-flag evidence.",
-  "requestFramePermissions": ["microphone"],
+  "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

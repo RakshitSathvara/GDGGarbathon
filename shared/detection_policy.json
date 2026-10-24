@@ -1,0 +1,33 @@
+{
+  "description": "Deterministic scoring policy applied on top of every Gemini chunk verdict. Loaded by both server/rules.ts (Node) and app/rules.py (Python) so the two backends can never drift apart.",
+  "verdict_thresholds": {
+    "SUSPICIOUS": 30,
+    "SCAM": 70
+  },
+  "risk_floors": {
+    "hard_red_flag": 75,
+    "authority_threat_urgency": 70,
+    "sticky_scam": 70
+  },
+  "hard_red_flags": [
+    "OTP_OR_CREDENTIALS",
+    "MONEY_REQUEST",
+    "REMOTE_ACCESS_OR_LINK",
+    "SECRECY",
+    "HANDOFF_TO_OFFICIAL"
+  ],
+  "trio_red_flags": ["AUTHORITY_CLAIM", "THREAT", "URGENCY"],
+  "fallback_warnings": {
+    "SCAM": {
+      "gu": "સાવધાન! આ કોલ ફ્રોડ હોઈ શકે છે. OTP કે પૈસા ન આપો. ફોન કાપી નાખો અને 1930 પર ફોન કરો.",
+      "hi": "सावधान! यह कॉल फ्रॉड हो सकती है। OTP या पैसे मत दीजिए। फ़ोन काट दीजिए और 1930 पर कॉल कीजिए।",
+      "en": "Warning! This call may be a fraud. Do not share OTP or money. Hang up and call 1930."
+    },
+    "SUSPICIOUS": {
+      "gu": "સાવધાન! આ કોલ શંકાસ્પદ લાગે છે. કોઈ પણ માહિતી આપતા પહેલા ચકાસણી કરો.",
+      "hi": "सावधान! यह कॉल संदिग्ध लग रही है। कोई भी जानकारी देने से पहले जाँच करें।",
+      "en": "Caution! This call sounds suspicious. Verify before sharing any details."
+    }
+  },
+  "gujarati_text_fixes": [["सावधान!", "સાવધાન!"], ["सापवधान!", "સાવધાન!"], ["સાપવધાન!", "સાવધાન!"]]
+}
