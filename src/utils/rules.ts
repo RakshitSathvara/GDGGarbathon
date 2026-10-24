@@ -85,6 +85,55 @@ export const SUSPICIOUS_FALLBACK_HI =
 export const SUSPICIOUS_FALLBACK_EN =
   'Caution! This call sounds suspicious. Verify before sharing any details.';
 
+export const MAX_WAV_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+
+export interface WavValidationResult {
+  valid: boolean;
+  error?: string;
+  sanitizedStem?: string;
+}
+
+export function validateWavUpload(
+  fileName: string,
+  byteLength: number,
+  headerBytes?: Uint8Array
+): WavValidationResult {
+  const trimmed = String(fileName || '').trim();
+  if (!trimmed) {
+    return { valid: false, error: 'Please select a .wav audio file.' };
+  }
+  if (!trimmed.toLowerCase().endsWith('.wav')) {
+    return { valid: false, error: 'Only .wav files are allowed.' };
+  }
+  if (!Number.isFinite(byteLength) || byteLength <= 44) {
+    return { valid: false, error: 'The .wav file is empty or corrupted.' };
+  }
+  if (byteLength > MAX_WAV_UPLOAD_BYTES) {
+    const sizeMb = (byteLength / (1024 * 1024)).toFixed(2);
+    return {
+      valid: false,
+      error: `File size (${sizeMb} MB) exceeds the 10 MB maximum limit.`,
+    };
+  }
+  if (headerBytes && headerBytes.length >= 12) {
+    const riff = String.fromCharCode(headerBytes[0], headerBytes[1], headerBytes[2], headerBytes[3]);
+    const wave = String.fromCharCode(headerBytes[8], headerBytes[9], headerBytes[10], headerBytes[11]);
+    if (riff !== 'RIFF' || wave !== 'WAVE') {
+      return { valid: false, error: 'Invalid WAV file header (expected RIFF/WAVE).' };
+    }
+  }
+
+  const baseNoExt = trimmed.replace(/\.wav$/i, '');
+  const sanitizedStem =
+    baseNoExt
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 48) || 'uploaded_call';
+
+  return { valid: true, sanitizedStem };
+}
+
 export function verdictFromRisk(risk: number): 'SAFE' | 'SUSPICIOUS' | 'SCAM' {
   if (risk < 30) return 'SAFE';
   if (risk < 70) return 'SUSPICIOUS';

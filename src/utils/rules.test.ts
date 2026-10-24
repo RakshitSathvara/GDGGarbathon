@@ -4,10 +4,40 @@ import {
   applySessionRules,
   buildContextBlock,
   createEmptySession,
+  MAX_WAV_UPLOAD_BYTES,
   SCAM_FALLBACK_GU,
   SCAM_FALLBACK_HI,
+  validateWavUpload,
   verdictFromRisk,
 } from './rules';
+
+test('validateWavUpload accepts valid .wav up to 10 MB and rejects non-.wav or >10 MB files', () => {
+  const validHeader = new Uint8Array([
+    0x52, 0x49, 0x46, 0x46, // RIFF
+    0x24, 0x08, 0x00, 0x00,
+    0x57, 0x41, 0x56, 0x45, // WAVE
+  ]);
+
+  const ok = validateWavUpload('My Call Recording.wav', 512 * 1024, validHeader);
+  assert.equal(ok.valid, true);
+  assert.equal(ok.sanitizedStem, 'my_call_recording');
+
+  const exact10Mb = validateWavUpload('max.WAV', MAX_WAV_UPLOAD_BYTES, validHeader);
+  assert.equal(exact10Mb.valid, true);
+
+  const tooLarge = validateWavUpload('huge.wav', MAX_WAV_UPLOAD_BYTES + 1, validHeader);
+  assert.equal(tooLarge.valid, false);
+  assert.ok(tooLarge.error?.includes('10 MB'));
+
+  const wrongExt = validateWavUpload('audio.mp3', 10240, validHeader);
+  assert.equal(wrongExt.valid, false);
+  assert.ok(wrongExt.error?.includes('Only .wav files'));
+
+  const badHeader = new Uint8Array([0x49, 0x44, 0x33, 0x03, 0, 0, 0, 0, 0, 0, 0, 0]);
+  const invalidMime = validateWavUpload('fake.wav', 10240, badHeader);
+  assert.equal(invalidMime.valid, false);
+  assert.ok(invalidMime.error?.includes('Invalid WAV'));
+});
 
 test('verdictFromRisk maps thresholds <30 SAFE, 30-69 SUSPICIOUS, >=70 SCAM', () => {
   assert.equal(verdictFromRisk(0), 'SAFE');

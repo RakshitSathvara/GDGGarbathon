@@ -1,8 +1,11 @@
 """FastAPI server for Saavdhan."""
 from __future__ import annotations
 
+import base64
 import json
 import os
+import re
+import subprocess
 import time
 import uuid
 from pathlib import Path
@@ -23,9 +26,11 @@ from app.detector import (
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 CALLS_DIR = ROOT_DIR / "calls"
+RAW_CALLS_DIR = CALLS_DIR / "raw"
 CACHE_DIR = ROOT_DIR / "cache"
 STATIC_DIR = ROOT_DIR / "static"
 MANIFEST_PATH = CALLS_DIR / "manifest.json"
+MAX_WAV_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
 
 app = FastAPI(title="Saavdhan API")
 
@@ -42,6 +47,13 @@ class AnalyzeChunkRequest(BaseModel):
     session_id: str
     chunk_index: int
     replay: Optional[bool] = None
+
+
+class UploadWavRequest(BaseModel):
+    filename: str
+    data_base64: str
+    title: Optional[str] = None
+    expected: Optional[str] = "SCAM"
 
 
 def load_manifest() -> List[Dict[str, Any]]:
@@ -93,6 +105,82 @@ def list_calls() -> Dict[str, Any]:
         "demo_replay": demo_replay,
         "model": os.getenv("MODEL", "gemini-3.8-flash"),
     }
+
+
+@app.post("/api/upload")
+def upload_wav(req: UploadWavRequest) -> Dict[str, Any]:
+    filename = (req.filename or "").strip()
+    if not filename.lower().endswith(".wav"):
+        raise HTTPException(status_code=400, detail="Only .wav files are allowed.")
+
+    try:
+        raw_bytes = base64.b64decode(req.data_base64, validate=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 audio payload.")
+
+    if len(raw_bytes) <= 44:
+        raise HTTPException(status_code=400, detail="The .wav file is empty or corrupted.")
+    if len(raw_bytes) > MAX_WAV_UPLOAD_BYTES:
+        size_mb = len(raw_bytes) / (1024 * 1024)
+        raise HTTPException(
+            status_code=400,
+            detail=f"File size ({size_mb:.2f} MB) exceeds the 10 MB maximum limit.",
+        )
+
+    if raw_bytes[:4] != b"RIFF" or raw_bytes[8:12] != b"WAVE":
+        raise HTTPException(status_code=400, detail="Invalid WAV file header (expected RIFF/WAVE).")
+
+    stem = re.sub(r"[^a-z0-9_-]+", "_", Path(filename).stem.lower()).strip("_")[:48] or "uploaded_call"
+    out_filename = f"{stem}.wav"
+    RAW_CALLS_DIR.mkdir(parents=True, exist_ok=True)
+    CALLS_DIR.mkdir(parents=True, exist_ok=True)
+
+    raw_path = RAW_CALLS_DIR / out_filename
+    dest_path = CALLS_DIR / out_filename
+    raw_path.write_bytes(raw_bytes)
+
+    # Convert to 16 kHz mono 16-bit PCM WAV via ffmpeg (matching scripts/prep.sh)
+    try:
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-i",
+                str(raw_path),
+                "-ar",
+                "16000",
+                "-ac",
+                "1",
+                "-c:a",
+                "pcm_s16le",
+                str(dest_path),
+            ],
+            check=True,
+        )
+    except Exception:
+        dest_path.write_bytes(raw_bytes)
+
+    CALL_META_CACHE.pop(stem, None)
+    manifest = load_manifest()
+    expected = req.expected if req.expected in ("SCAM", "SAFE") else "SCAM"
+    title = (req.title or "").strip() or f"Uploaded — {Path(filename).stem}"
+
+    existing_entry = next((m for m in manifest if m["file"] == out_filename), None)
+    if existing_entry:
+        existing_entry["title"] = title
+        existing_entry["expected"] = expected
+        entry = existing_entry
+    else:
+        entry = {"file": out_filename, "title": title, "expected": expected}
+        manifest.append(entry)
+
+    MANIFEST_PATH.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    call_meta = get_call_metadata(entry)
+    calls = [get_call_metadata(item) for item in manifest]
+    return {"call": call_meta, "calls": calls}
 
 
 @app.post("/api/session")

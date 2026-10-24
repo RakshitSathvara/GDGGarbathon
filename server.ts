@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import {
@@ -9,6 +10,7 @@ import {
   buildContextBlock,
   createEmptySession,
   SessionState,
+  validateWavUpload,
 } from './src/utils/rules';
 
 dotenv.config();
@@ -345,7 +347,8 @@ async function analyzeChunkWithGemini(wavBytes: Buffer, contextBlock: string) {
 }
 
 const app = express();
-app.use(express.json({ limit: '10mb' }));
+// Allow up to 16MB JSON body so a 10MB binary WAV encoded as base64 (~13.4MB) is accepted and validated
+app.use(express.json({ limit: '16mb' }));
 
 const SESSIONS = new Map<string, SessionState & { call_meta: any }>();
 const CALL_META_CACHE = new Map<string, { mtime: number; data: any }>();
@@ -395,6 +398,79 @@ app.get('/api/calls', (_req, res) => {
     demo_replay: demoReplay,
     model: process.env.MODEL || 'gemini-3.8-flash',
   });
+});
+
+app.post('/api/upload', (req, res) => {
+  const { filename, data_base64, title, expected } = req.body || {};
+  if (!filename || typeof filename !== 'string' || !data_base64 || typeof data_base64 !== 'string') {
+    res.status(400).json({ detail: 'Missing filename or base64 audio payload.' });
+    return;
+  }
+
+  let rawBuf: Buffer;
+  try {
+    rawBuf = Buffer.from(data_base64, 'base64');
+  } catch {
+    res.status(400).json({ detail: 'Invalid base64 audio payload.' });
+    return;
+  }
+
+  const check = validateWavUpload(filename, rawBuf.length, rawBuf.subarray(0, 12));
+  if (!check.valid || !check.sanitizedStem) {
+    res.status(400).json({ detail: check.error || 'Invalid .wav file.' });
+    return;
+  }
+
+  const stem = check.sanitizedStem;
+  const outFileName = `${stem}.wav`;
+  const rawCallsDir = path.join(CALLS_DIR, 'raw');
+  fs.mkdirSync(rawCallsDir, { recursive: true });
+  fs.mkdirSync(CALLS_DIR, { recursive: true });
+
+  const rawPath = path.join(rawCallsDir, outFileName);
+  const destPath = path.join(CALLS_DIR, outFileName);
+  fs.writeFileSync(rawPath, rawBuf);
+
+  try {
+    execFileSync('ffmpeg', [
+      '-y',
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-i',
+      rawPath,
+      '-ar',
+      '16000',
+      '-ac',
+      '1',
+      '-c:a',
+      'pcm_s16le',
+      destPath,
+    ]);
+  } catch {
+    fs.writeFileSync(destPath, rawBuf);
+  }
+
+  CALL_META_CACHE.delete(stem);
+  const manifest = loadManifest();
+  const resolvedExpected = expected === 'SAFE' ? 'SAFE' : 'SCAM';
+  const resolvedTitle =
+    (typeof title === 'string' && title.trim()) ||
+    `Uploaded — ${path.parse(filename).name}`;
+
+  let entry = manifest.find((m) => m.file === outFileName);
+  if (entry) {
+    entry.title = resolvedTitle;
+    entry.expected = resolvedExpected;
+  } else {
+    entry = { file: outFileName, title: resolvedTitle, expected: resolvedExpected };
+    manifest.push(entry);
+  }
+
+  fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2), 'utf-8');
+  const callMeta = getCallMetadata(entry);
+  const calls = manifest.map(getCallMetadata);
+  res.json({ call: callMeta, calls });
 });
 
 app.post('/api/session', (req, res) => {

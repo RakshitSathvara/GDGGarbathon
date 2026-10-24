@@ -9,7 +9,7 @@
     "file": "fake_kyc.wav",
     "title": "Fake Bank KYC — Account Block & OTP Demand",
     "expected": "SCAM",
-    "first_demand_at": 16.0
+    "first_demand_at": 16
   },
   {
     "file": "fake_courier.wav",
